@@ -4,12 +4,13 @@ Thanks for your interest in contributing! This project aims to build a multi-age
 
 ## Getting Started
 
-New here? The issues labeled [good first issue](https://github.com/SanDiegoAIStudio/apollo-mission-control/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are scoped so one person can finish one in an evening. Before you open a PR, run the three checks the repo expects:
+New here? The issues labeled [good first issue](https://github.com/SanDiegoAIStudio/apollo-mission-control/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are scoped so one person can finish one in an evening. Before you open a PR, run the four checks the repo expects. The last one reverts each guarded fix in a temporary copy and proves its test goes red, so a green suite means something:
 
 ```bash
 uv run ruff check .
 uv run mypy src
 uv run pytest
+uv run python tests/mutation_gate.py
 ```
 
 1. Fork the repo

@@ -9,6 +9,7 @@ from apollo_mc.schemas.commands import (
     AuthorityLevel,
     CommandPriority,
     CommandRequest,
+    GoNoGo,
     SeatRecommendation,
 )
 from apollo_mc.schemas.telemetry import TelemetryFrame
@@ -63,7 +64,7 @@ class FidoAgent(SeatAgent):
         if constraints:
             return SeatRecommendation(
                 seat=self.seat_name,
-                go_nogo="NO_GO",
+                go_nogo=GoNoGo.NO_GO,
                 status_summary=f"Trajectory constraint violation: {constraints[0]}",
                 constraints=constraints,
                 warnings=warnings,
@@ -72,7 +73,7 @@ class FidoAgent(SeatAgent):
 
         return SeatRecommendation(
             seat=self.seat_name,
-            go_nogo="GO",
+            go_nogo=GoNoGo.GO,
             status_summary=(
                 f"Orbit {orbital.periapsis / 1000:.1f}km x {orbital.apoapsis / 1000:.1f}km, "
                 f"e={orbital.eccentricity:.4f}"

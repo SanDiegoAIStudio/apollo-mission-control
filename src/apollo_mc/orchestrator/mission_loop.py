@@ -6,13 +6,14 @@ import os
 import structlog
 from rich.console import Console
 from rich.live import Live
+from rich.markup import escape
 from rich.table import Table
 
 from apollo_mc.agents.capcom import CapcomAgent
 from apollo_mc.agents.eecom import EecomAgent
 from apollo_mc.agents.fido import FidoAgent
 from apollo_mc.agents.flight import FlightDirectorAgent
-from apollo_mc.bridge.kos_client import KosBridge
+from apollo_mc.bridge.kos_client import KosBridge, TelemetryError
 from apollo_mc.core.command_dispatch import CommandDispatcher
 from apollo_mc.core.mission_state import MissionState
 from apollo_mc.core.telemetry_bus import TelemetryBus
@@ -20,6 +21,8 @@ from apollo_mc.orchestrator.decision_cycle import DecisionCycle
 
 logger = structlog.get_logger()
 console = Console()
+
+MAX_CONSECUTIVE_TELEMETRY_ERRORS = 5
 
 
 def build_status_table(state: MissionState) -> Table:
@@ -88,8 +91,8 @@ async def run_mission() -> None:
     try:
         await bridge.connect()
         console.print("[green]kOS connection established.[/green]\n")
-    except ConnectionRefusedError:
-        console.print("[red]Failed to connect to kOS.[/red]")
+    except OSError as exc:
+        console.print(f"[red]Failed to connect to kOS: {escape(str(exc))}[/red]")
         console.print("Make sure KSP is running with kOS telnet enabled.")
         console.print(f"Expected at {kos_host}:{kos_port}")
         return
@@ -97,30 +100,48 @@ async def run_mission() -> None:
     # Main loop
     console.print("[bold]Mission Control is GO. Starting decision loop.[/bold]\n")
 
-    with Live(build_status_table(state), console=console, refresh_per_second=1) as live:
-        while not state.mission_complete and not state.abort_called:
-            try:
-                # Read telemetry
-                frame = await bridge.read_telemetry()
+    consecutive_telemetry_errors = 0
+    try:
+        with Live(build_status_table(state), console=console, refresh_per_second=1) as live:
+            while not state.mission_complete and not state.abort_called:
+                try:
+                    # Read telemetry
+                    frame = await bridge.read_telemetry()
+                    consecutive_telemetry_errors = 0
 
-                # Publish to bus
-                await bus.publish(frame)
+                    # Publish to bus
+                    await bus.publish(frame)
 
-                # Run decision cycle
-                await cycle.tick(frame)
+                    # Run decision cycle
+                    await cycle.tick(frame)
 
-                # Update display
-                live.update(build_status_table(state))
+                    # Update display
+                    live.update(build_status_table(state))
 
-                # Wait for next tick
-                await asyncio.sleep(tick_interval)
+                    # Wait for next tick
+                    await asyncio.sleep(tick_interval)
 
-            except ConnectionError:
-                console.print("[red]Lost connection to kOS![/red]")
-                break
-            except KeyboardInterrupt:
-                break
-
-    # Cleanup
-    await bridge.disconnect()
-    console.print("\n[bold]Mission Control signing off.[/bold]")
+                except TelemetryError as exc:
+                    consecutive_telemetry_errors += 1
+                    logger.error(
+                        "telemetry_error",
+                        error=str(exc),
+                        consecutive=consecutive_telemetry_errors,
+                    )
+                    console.print(f"[red]{escape(str(exc))}[/red]")
+                    if consecutive_telemetry_errors >= MAX_CONSECUTIVE_TELEMETRY_ERRORS:
+                        console.print(
+                            f"[red]{MAX_CONSECUTIVE_TELEMETRY_ERRORS} consecutive "
+                            "telemetry errors. Stopping the decision loop.[/red]"
+                        )
+                        break
+                    await asyncio.sleep(tick_interval)
+                except OSError as exc:
+                    console.print(f"[red]Lost connection to kOS: {escape(str(exc))}[/red]")
+                    break
+                except KeyboardInterrupt:
+                    break
+    finally:
+        # Cleanup
+        await bridge.disconnect()
+        console.print("\n[bold]Mission Control signing off.[/bold]")

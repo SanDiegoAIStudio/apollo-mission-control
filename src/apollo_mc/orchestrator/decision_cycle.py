@@ -9,6 +9,8 @@ Every tick:
 """
 
 import asyncio
+from typing import TYPE_CHECKING
+
 import structlog
 
 from apollo_mc.agents.base import SeatAgent
@@ -16,8 +18,10 @@ from apollo_mc.agents.flight import FlightDirectorAgent
 from apollo_mc.core.command_dispatch import CommandDispatcher
 from apollo_mc.core.mission_state import MissionState
 from apollo_mc.core.telemetry_bus import TelemetryBus
-from apollo_mc.schemas.commands import SeatRecommendation
 from apollo_mc.schemas.telemetry import TelemetryFrame
+
+if TYPE_CHECKING:
+    from apollo_mc.schemas.commands import SeatRecommendation
 
 logger = structlog.get_logger()
 
@@ -51,13 +55,24 @@ class DecisionCycle:
         # Collect recommendations
         recommendations: dict[str, SeatRecommendation] = {}
         for seat, result in zip(self._seats, results, strict=True):
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 logger.error("seat_evaluation_error", seat=seat.seat_name, error=str(result))
-                continue
-            recommendations[seat.seat_name] = result
+                recommendations[seat.seat_name] = seat.no_go(
+                    "evaluation failed",
+                    [str(result)],
+                )
+            else:
+                recommendations[seat.seat_name] = result
 
         # Flight Director also evaluates
-        flight_rec = await self._flight.evaluate(frame)
+        try:
+            flight_rec = await self._flight.evaluate(frame)
+        except Exception as exc:
+            logger.error("flight_evaluation_error", error=str(exc))
+            flight_rec = self._flight.no_go(
+                "Flight Director evaluation failed",
+                [str(exc)],
+            )
         recommendations[self._flight.seat_name] = flight_rec
 
         # Store all recommendations
@@ -68,8 +83,26 @@ class DecisionCycle:
         self._state.record_decision(decision)
 
         # Dispatch approved commands
-        for command in decision.approved_commands:
-            await self._dispatcher.dispatch(command, frame.timestamp)
+        approved = decision.approved_commands
+        for index, command in enumerate(approved):
+            failure: str | None = None
+            try:
+                sent = await self._dispatcher.dispatch(command, frame.timestamp)
+            except Exception as exc:
+                sent = False
+                failure = str(exc)
+            if not sent:
+                logger.error(
+                    "command_dispatch_rejected",
+                    seat=command.source_seat,
+                    command_type=command.command_type,
+                    error=failure,
+                )
+                logger.error(
+                    "command_batch_aborted",
+                    not_sent=len(approved) - index,
+                )
+                break
 
         logger.info(
             "cycle_complete",

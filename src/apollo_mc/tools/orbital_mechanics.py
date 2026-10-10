@@ -2,7 +2,6 @@
 
 import math
 
-
 # Gravitational parameters (mu = GM) in m^3/s^2
 MU_KERBIN = 3.5316e12
 MU_MUN = 6.5138e10
@@ -75,10 +74,7 @@ def circularization_dv(
     """
     a_current = (current_apoapsis + current_periapsis) / 2
 
-    if circularize_at == "apoapsis":
-        r = current_apoapsis
-    else:
-        r = current_periapsis
+    r = current_apoapsis if circularize_at == "apoapsis" else current_periapsis
 
     v_current = orbital_velocity(mu, r, a_current)
     v_circular = math.sqrt(mu / r)

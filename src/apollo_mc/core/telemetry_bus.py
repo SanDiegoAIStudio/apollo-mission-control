@@ -1,9 +1,10 @@
 """Telemetry bus — receives frames from the kOS bridge and distributes to agents."""
 
 import asyncio
-import structlog
 from collections.abc import Callable, Coroutine
 from typing import Any
+
+import structlog
 
 from apollo_mc.schemas.telemetry import TelemetryFrame
 

@@ -9,6 +9,7 @@ from apollo_mc.schemas.commands import (
     AuthorityLevel,
     CommandPriority,
     CommandRequest,
+    GoNoGo,
     SeatRecommendation,
 )
 from apollo_mc.schemas.telemetry import TelemetryFrame
@@ -68,7 +69,7 @@ class EecomAgent(SeatAgent):
         if constraints:
             return SeatRecommendation(
                 seat=self.seat_name,
-                go_nogo="NO_GO",
+                go_nogo=GoNoGo.NO_GO,
                 status_summary=f"Resource constraint: {constraints[0]}",
                 constraints=constraints,
                 warnings=warnings,
@@ -77,7 +78,7 @@ class EecomAgent(SeatAgent):
 
         return SeatRecommendation(
             seat=self.seat_name,
-            go_nogo="GO",
+            go_nogo=GoNoGo.GO,
             status_summary=f"Power {ec_pct:.0f}%, charge rate {frame.power.charge_rate:+.2f}/s",
             constraints=[],
             warnings=warnings,

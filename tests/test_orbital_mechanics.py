@@ -3,8 +3,8 @@
 import math
 
 from apollo_mc.tools.orbital_mechanics import (
-    RADIUS_KERBIN,
     MU_KERBIN,
+    RADIUS_KERBIN,
     burn_time,
     circularization_dv,
     hohmann_transfer_dv,

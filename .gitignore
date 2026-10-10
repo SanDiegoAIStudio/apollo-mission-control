@@ -41,3 +41,7 @@ logs/
 # Mission artifacts
 mission_logs/
 recordings/
+
+# Claude Code run markers
+.claude/*.local.md
+.omx/

@@ -1,24 +1,30 @@
 """Command schemas — what agents can request and what gets sent to kOS."""
 
-from enum import Enum
-from pydantic import BaseModel
+import re
+from enum import StrEnum
+
+from pydantic import BaseModel, field_validator
+
+Parameters = dict[str, float | str | bool]
+
+_PARAMETER_TOKEN = re.compile(r"[A-Za-z0-9_]+")
 
 
-class CommandPriority(str, Enum):
+class CommandPriority(StrEnum):
     CRITICAL = "critical"  # abort, emergency
     HIGH = "high"  # burns, staging
     NORMAL = "normal"  # attitude adjustments
     LOW = "low"  # telemetry requests
 
 
-class AuthorityLevel(str, Enum):
+class AuthorityLevel(StrEnum):
     COMMAND = "command"  # Flight Director — can issue anything
     EXECUTE = "execute"  # FIDO, GUIDO, GNC — can issue burns/attitude
     RECOMMEND = "recommend"  # EECOM, RETRO, TELMU — can only recommend
     COMMUNICATE = "communicate"  # CAPCOM — translates for crew
 
 
-class GoNoGo(str, Enum):
+class GoNoGo(StrEnum):
     GO = "GO"
     NO_GO = "NO_GO"
     STANDBY = "STANDBY"
@@ -40,10 +46,21 @@ class CommandRequest(BaseModel):
 
     source_seat: str
     command_type: str  # "burn", "stage", "attitude", "throttle", "sas", "rcs", etc.
-    parameters: dict[str, float | str | bool]
+    parameters: Parameters
     priority: CommandPriority
     authority_required: AuthorityLevel
     rationale: str
+
+    # Parameters are kOS tokens the dispatcher interpolates; human text belongs in rationale.
+    @field_validator("parameters")
+    @classmethod
+    def reject_unsafe_parameter_strings(cls, value: Parameters) -> Parameters:
+        for key, item in value.items():
+            if isinstance(item, str) and _PARAMETER_TOKEN.fullmatch(item) is None:
+                raise ValueError(
+                    f"parameter {key!r} does not match {_PARAMETER_TOKEN.pattern}"
+                )
+        return value
 
 
 class BurnCommand(BaseModel):

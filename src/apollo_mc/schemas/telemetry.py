@@ -1,10 +1,11 @@
 """Telemetry data models — the shared language between KSP and all agent seats."""
 
-from enum import Enum
-from pydantic import BaseModel
+from enum import StrEnum
+
+from pydantic import BaseModel, ConfigDict
 
 
-class MissionPhase(str, Enum):
+class MissionPhase(StrEnum):
     PRELAUNCH = "prelaunch"
     LAUNCH = "launch"
     ASCENT = "ascent"
@@ -23,6 +24,8 @@ class MissionPhase(str, Enum):
 
 
 class Vector3(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     x: float
     y: float
     z: float
@@ -30,6 +33,8 @@ class Vector3(BaseModel):
 
 class OrbitalState(BaseModel):
     """Keplerian orbital elements + useful derived values."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
 
     body: str  # "Kerbin", "Mun", etc.
     apoapsis: float  # meters
@@ -45,6 +50,8 @@ class OrbitalState(BaseModel):
 
 class VesselState(BaseModel):
     """Core vessel telemetry — what the kOS bridge reads every tick."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
 
     mission_time: float  # seconds since launch
     mass: float  # kg
@@ -62,6 +69,8 @@ class VesselState(BaseModel):
 class EngineState(BaseModel):
     """Propulsion system status."""
 
+    model_config = ConfigDict(allow_inf_nan=False)
+
     engine_name: str
     active: bool
     thrust: float  # kN
@@ -73,6 +82,8 @@ class EngineState(BaseModel):
 
 class ResourceLevel(BaseModel):
     """A single resource (LiquidFuel, Oxidizer, ElectricCharge, etc.)."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
 
     name: str
     amount: float
@@ -88,6 +99,8 @@ class ResourceLevel(BaseModel):
 class PowerState(BaseModel):
     """Electrical system status."""
 
+    model_config = ConfigDict(allow_inf_nan=False)
+
     electric_charge: ResourceLevel
     charge_rate: float  # units/s (positive = generating)
     solar_panels_deployed: bool
@@ -96,6 +109,8 @@ class PowerState(BaseModel):
 
 class TelemetryFrame(BaseModel):
     """One complete telemetry snapshot — published every tick."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
 
     timestamp: float  # mission elapsed time
     phase: MissionPhase
