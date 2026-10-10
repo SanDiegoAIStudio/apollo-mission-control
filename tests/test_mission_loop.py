@@ -79,7 +79,7 @@ async def test_telemetry_errors_reset_after_a_good_frame(
         *[TelemetryError("read failed") for _ in range(5)],
     ]
     bridge_type = _install(monkeypatch, script)
-    await run_mission()
+    await asyncio.wait_for(run_mission(), timeout=2.0)
     bridge = bridge_type.instance
     assert bridge.reads == 10
     assert bridge.disconnected is True
