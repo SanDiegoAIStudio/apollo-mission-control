@@ -4,6 +4,14 @@ Thanks for your interest in contributing! This project aims to build a multi-age
 
 ## Getting Started
 
+New here? The issues labeled [good first issue](https://github.com/SanDiegoAIStudio/apollo-mission-control/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are scoped so one person can finish one in an evening. Before you open a PR, run the three checks the repo expects:
+
+```bash
+uv run ruff check .
+uv run mypy src
+uv run pytest
+```
+
 1. Fork the repo
 2. Clone your fork
 3. Create a feature branch: `git checkout -b feat/your-feature`
@@ -52,7 +60,7 @@ A web-based dashboard showing:
 - Python 3.11+ with type hints everywhere
 - Pydantic for all data models
 - `ruff` for linting and formatting
-- No `any` types in Python type hints — use proper types or `Unknown`
+- No `Any` in type hints; mypy runs in strict mode
 - Tests for all new functionality
 
 ## Commit Messages

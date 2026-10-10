@@ -20,6 +20,10 @@ This project recreates that architecture with AI agents. Each controller seat is
 
 The agents coordinate through a shared mission state and decision cycle, with the Flight Director agent aggregating recommendations and issuing final commands to KSP via kOS.
 
+## Status (October 2026)
+
+Pre-alpha scaffold, not a flown mission. Four seats are coded (FLIGHT, FIDO, EECOM, CAPCOM) with deterministic threshold logic; the role prompts in `prompts/` are written but no LLM call is wired in yet. The authority tiers are enforced in the Flight Director, the orbital mechanics tools have tests, and the kOS bridge has never been run against a live KSP. If you want to help, start with the issues labeled [good first issue](https://github.com/SanDiegoAIStudio/apollo-mission-control/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). If you would rather take the idea and build your own, the MIT license means you can.
+
 ## Architecture
 
 ```
@@ -113,7 +117,7 @@ The agents coordinate through a shared mission state and decision cycle, with th
 
 ```bash
 # Clone
-git clone https://github.com/lcb-projects/apollo-mission-control.git
+git clone https://github.com/SanDiegoAIStudio/apollo-mission-control.git
 cd apollo-mission-control
 
 # Install

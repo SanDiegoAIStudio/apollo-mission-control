@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
-    { name = "lcb-projects" },
+    { name = "Lucas Cooper-Bey" },
 ]
 keywords = ["ai", "agents", "ksp", "apollo", "mission-control", "llm"]
 classifiers = [
@@ -50,8 +50,8 @@ dashboard = [
 ]
 
 [project.urls]
-Repository = "https://github.com/lcb-projects/apollo-mission-control"
-Issues = "https://github.com/lcb-projects/apollo-mission-control/issues"
+Repository = "https://github.com/SanDiegoAIStudio/apollo-mission-control"
+Issues = "https://github.com/SanDiegoAIStudio/apollo-mission-control/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/apollo_mc"]
